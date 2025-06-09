@@ -1,0 +1,233 @@
+---
+title: "PRC_analysis"
+output: html_document
+author: Robert Thibault
+date: "2025-06-09"
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse) # Load tidyverse package
+library(kableExtra) # To display the table
+df_compliance_metrics <- read_csv("data/df_compliance_metrics.csv")
+df_preprint_dates <- read_csv("data/df_preprint_dates.csv")
+```
+
+```{r calculate_percentage}
+# Make a percentage columns for each of the resource types
+df_compliance_metrics <- df_compliance_metrics %>%
+  mutate(
+    data_new_perc        = data_new_shared / data_new_denom,
+    data_reuse_perc      = data_reuse_shared / data_reuse_denom,
+    code_new_perc        = code_new_shared / code_new_denom,
+    software_reuse_perc  = software_reuse_shared / software_reuse_denom,
+    materials_new_perc   = materials_new_shared / materials_new_denom,
+    materials_reuse_perc = materials_reuse_shared / materials_reuse_denom,
+    protocol_perc        = protocol_shared / protocol_denom
+  ) %>% 
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>% 
+  mutate(across(where(is.numeric), ~ ifelse(is.nan(.x), "NaN", .x)))
+
+write_csv(df_compliance_metrics, "results/df_compliance_metrics.csv")
+```
+
+```{r create_summary_function}
+# Create function to summarize compliance data
+
+summarize_data <- function(df){
+  
+  df_summary <- df %>%
+    summarize(
+      # First block to calculate N
+      across(
+        c(
+          data_new_denom,
+          data_reuse_denom,
+          code_new_denom,
+          software_reuse_denom,
+          materials_new_denom,
+          materials_reuse_denom,
+          protocol_denom
+        ),
+        ~ sum(. > 0, na.rm = TRUE),
+        .names = "{.col}_n" # Adds a suffix "_n" to the original column names
+      ),
+      # Second block to sum values
+      across(
+        c(
+          data_new_shared,
+          data_reuse_shared,
+          code_new_shared,
+          software_reuse_shared,
+          materials_new_shared,
+          materials_reuse_shared,
+          protocol_shared,
+          data_new_denom,
+          data_reuse_denom,
+          code_new_denom,
+          software_reuse_denom,
+          materials_new_denom,
+          materials_reuse_denom,
+          protocol_denom
+        ),
+        sum, na.rm = TRUE
+      ),
+      # Third block to calculate means
+      across(
+        c(
+          data_new_perc,
+          data_reuse_perc,
+          code_new_perc,
+          software_reuse_perc,
+          materials_new_perc,
+          materials_reuse_perc,
+          protocol_perc
+        ),
+        mean, na.rm = TRUE
+      )
+    )
+  
+  df_summary <- df_summary %>%
+    mutate(
+      data_new_perc_tot        = data_new_shared / data_new_denom,
+      data_reuse_perc_tot      = data_reuse_shared / data_reuse_denom,
+      code_new_perc_tot        = code_new_shared / code_new_denom,
+      software_reuse_perc_tot  = software_reuse_shared / software_reuse_denom,
+      materials_new_perc_tot   = materials_new_shared / materials_new_denom,
+      materials_reuse_perc_tot = materials_reuse_shared / materials_reuse_denom,
+      protocol_perc_tot        = protocol_shared / protocol_denom
+    ) 
+  
+  t1 <- data.frame(matrix(df_summary, nrow = 7, byrow = FALSE))
+  
+  colnames(t1) <- c(
+    "n",
+    "shared",
+    "denom",
+    "perc_paper",
+    "perc_output"
+  )
+  
+  rownames(t1) <- c(
+    "data_new",
+    "data_reuse",
+    "code_new",
+    "software_reuse",
+    "materials_new",
+    "materials_reuse",
+    "protocols"
+  )
+  
+  t1$perc_paper <- t1$perc_paper %>% as.numeric() %>% round(2)
+  t1$perc_output <- t1$perc_output %>% as.numeric() %>% round(2)
+  
+  return(t1)
+  
+}
+```
+
+```{r create_tables}
+# Separate data by first_version vs publication. 
+df_pub <- df_compliance_metrics %>% filter(version == "published")
+df1 <- df_compliance_metrics %>% filter(version == "first_version")
+
+# Create table of summary data
+t_pub <- summarize_data(df_pub)
+t1 <- summarize_data(df1)
+t_all <- cbind(t1, t_pub) 
+
+
+colnames(t_all) <- c(
+  "v1_n",
+  "v1_shared",
+  "v1_denom",
+  "v1_perc_paper",
+  "v1_perc_output",
+  "pub_n",
+  "pub_shared",
+  "pub_denom",
+  "pub_perc_paper",
+  "pub_perc_output"
+)
+
+# Calculate improvement in scores betwee v1 and published version
+t_all <- t_all %>%  
+  mutate(
+    perc_paper_dif = pub_perc_paper - v1_perc_paper,
+    perc_output_dif = pub_perc_output - v1_perc_output
+  )
+
+# Print the results section of the Abstract
+t_perc <- t_all
+t_perc$v1_perc_output <- paste0(as.numeric(t_perc$v1_perc_output) * 100, "%") 
+t_perc$pub_perc_output <- paste0(as.numeric(t_perc$pub_perc_output) * 100, "%")
+t_perc$perc_output_dif <- paste0(as.numeric(t_perc$perc_output_dif) * 100, "%") 
+
+```
+
+```{r output_tables}
+t_all <- t_all %>% 
+  mutate(across(where(is.list), ~map_chr(., ~paste(.x, collapse = ", ")))) # Necessary for correct output
+
+write_csv(t_all, "results/compliance_metrics_full_table.csv")
+
+# Format table for abstract
+t_cut <- t_perc %>% 
+  select(c(
+    pub_n,
+    pub_shared,
+    pub_denom,
+    pub_perc_output,
+    perc_output_dif
+  ))
+
+t_cut <- t_cut %>% 
+  mutate(across(where(is.list), ~map_chr(., ~paste(.x, collapse = ", ")))) # Necessary for correct output
+
+write_csv(t_cut, "results/compliance_metrics_abstract_table.csv")
+
+```
+
+```{r preprint_dates}
+# Calculate number of days between preprints, submission, and publication
+df_preprint_dates <- df_preprint_dates %>%
+  mutate(span_submission_preprint = as.numeric(date_journal_submission - date_preprint)) %>% 
+  mutate(span_publication_preprint = as.numeric(date_publication - date_preprint))
+
+# Calculate number of preprints
+n_preprint <- sum(!is.na(df_preprint_dates$date_preprint))
+n_no_sub_date <- sum(is.na(df_preprint_dates$date_journal_submission))
+
+# Calculate median and IQR for days between preprint and submission
+sub_pre <- quantile(
+  df_preprint_dates$span_submission_preprint,
+  probs = c(0.25, 0.50, 0.75),
+  na.rm = TRUE
+) %>% as.numeric() %>% round(0)
+
+# Calculate median and IQR for days between preprint and publication
+pub_pre <- quantile(
+  df_preprint_dates$span_publication_preprint,
+  probs = c(0.25, 0.50, 0.75),
+  na.rm = TRUE
+)
+
+write_csv(df_preprint_dates, "results/df_preprint_dates.csv")
+
+```
+**Objectives.** Sharing of research data, code, protocols, and lab materials remains limited and, in turn, undermines the cumulative nature of scientific discovery. The Aligning Science Across Parkinson’s (ASAP) initiative developed an intervention to increase the deposition and unambiguous identification of data, code, protocols, and key lab materials (e.g., cell lines, antibodies) used and generated in the research funded by the ASAP Collaborative Research Network (CRN).
+
+**Design.** ASAP established a thorough Open Science Policy1 and Compliance Workflow2, which are iteratively updated. The policy requires ASAP CRN grantees to send manuscript drafts to ASAP staff, post preprints, deposit all research outputs, and unambiguously identify all research inputs. The workflow is executed by an ASAP staff member who integrates automated and manual assessments to provide a grantee with systematic feedback outlining the actions required to align their manuscript draft with the ASAP Open Science Policy. This abstract presents a cross-sectional analysis of compliance with key policy items for all ASAP CRN-funded articles published between Jan 1, 2024 and May 31, 2025 (n = 103).
+
+**Results.** Between the version of a manuscript first shared with the ASAP staff and the associated final publication, there were substantial increases in the deposition of newly-generated datasets (first version: `r t_perc$v1_perc_output[1]` to published version: `r t_perc$pub_perc_output[1]`), unambiguous identification of reused datasets (`r t_perc$v1_perc_output[2]` to `r t_perc$pub_perc_output[2]`), deposition of newly-generated code (`r t_perc$v1_perc_output[3]` to `r t_perc$pub_perc_output[3]`), unambiguous identification of software used (`r t_perc$v1_perc_output[4]` to `r t_perc$pub_perc_output[4]`), registration of newly-generated key lab materials (`r t_perc$v1_perc_output[5]` to `r t_perc$pub_perc_output[5]`), unambiguous identification of key lab materials used (`r t_perc$v1_perc_output[6]` to `r t_perc$pub_perc_output[6]`), and deposition of newly-generated protocols and unambiguous identification of existing protocols (`r t_perc$v1_perc_output[7]` to `r t_perc$pub_perc_output[7]`; protocol data is collapsed across new and reuse) (see Table 1).
+
+`r (n_preprint / nrow(df_pub) * 100) %>% as.numeric() %>% round(0)`% (`r n_preprint`/`r nrow(df_preprint_dates)`) percent of publications had an associated preprint. Preprints were posted a median of `r sub_pre[2]` days (IQR: `r sub_pre[1]` to `r sub_pre[3]`) before submission to the journal in which they were eventually published, and `r pub_pre[2]` days (IQR: `r pub_pre[1]` to `r pub_pre[3]`) before they were published in a journal.
+
+**Conclusions.** A funder-led intervention to monitor and support a robust open science policy can foster the posting of preprints and the sharing of data, code, protocols, and key lab materials.
+
+**Table 1.** Rates for the deposition and unambiguous identification of various research resources.
+
+```{r} 
+kableExtra::kable(t_cut)
+```
+
