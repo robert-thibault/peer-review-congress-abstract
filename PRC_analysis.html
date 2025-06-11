@@ -359,11 +359,13 @@ display: none;
 
 <pre class="r"><code>knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse) # Load tidyverse package</code></pre>
+<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 4.4.3</code></pre>
+<pre><code>## Warning: package &#39;tibble&#39; was built under R version 4.4.3</code></pre>
 <pre><code>## Warning: package &#39;tidyr&#39; was built under R version 4.4.3</code></pre>
 <pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.4     ✔ readr     2.1.5
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
+## ✔ ggplot2   3.5.2     ✔ tibble    3.3.0
 ## ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
 ## ✔ purrr     1.0.4     
 ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
@@ -379,7 +381,7 @@ library(tidyverse) # Load tidyverse package</code></pre>
 ## 
 ##     group_rows</code></pre>
 <pre class="r"><code>df_compliance_metrics &lt;- read_csv(&quot;data/df_compliance_metrics.csv&quot;)</code></pre>
-<pre><code>## Rows: 206 Columns: 16
+<pre><code>## Rows: 204 Columns: 16
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr  (1): version
@@ -388,7 +390,7 @@ library(tidyverse) # Load tidyverse package</code></pre>
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <pre class="r"><code>df_preprint_dates &lt;- read_csv(&quot;data/df_preprint_dates.csv&quot;)</code></pre>
-<pre><code>## Rows: 103 Columns: 4
+<pre><code>## Rows: 102 Columns: 4
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr  (1): doi
@@ -407,10 +409,7 @@ df_compliance_metrics &lt;- df_compliance_metrics %&gt;%
     materials_reuse_perc = materials_reuse_shared / materials_reuse_denom,
     protocol_perc        = protocol_shared / protocol_denom
   ) %&gt;% 
-  mutate(across(where(is.numeric), ~ round(.x, 2))) %&gt;% 
-  mutate(across(where(is.numeric), ~ ifelse(is.nan(.x), &quot;NaN&quot;, .x)))
-
-write_csv(df_compliance_metrics, &quot;results/df_compliance_metrics.csv&quot;)</code></pre>
+  mutate(across(where(is.numeric), ~ round(.x, 2)))</code></pre>
 <pre class="r"><code># Create function to summarize compliance data
 
 summarize_data &lt;- function(df){
@@ -509,8 +508,7 @@ df1 &lt;- df_compliance_metrics %&gt;% filter(version == &quot;first_version&quo
 
 # Create table of summary data
 t_pub &lt;- summarize_data(df_pub)</code></pre>
-<pre><code>## Warning: There were 7 warnings in `summarize()`.
-## The first warning was:
+<pre><code>## Warning: There was 1 warning in `summarize()`.
 ## ℹ In argument: `across(...)`.
 ## Caused by warning:
 ## ! The `...` argument of `across()` is deprecated as of dplyr 1.1.0.
@@ -520,16 +518,9 @@ t_pub &lt;- summarize_data(df_pub)</code></pre>
 ##   across(a:b, mean, na.rm = TRUE)
 ## 
 ##   # Now
-##   across(a:b, \(x) mean(x, na.rm = TRUE))
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 6 remaining warnings.</code></pre>
-<pre class="r"><code>t1 &lt;- summarize_data(df1)</code></pre>
-<pre><code>## Warning: There were 6 warnings in `summarize()`.
-## The first warning was:
-## ℹ In argument: `across(...)`.
-## Caused by warning in `mean.default()`:
-## ! argument is not numeric or logical: returning NA
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 5 remaining warnings.</code></pre>
-<pre class="r"><code>t_all &lt;- cbind(t1, t_pub) 
+##   across(a:b, \(x) mean(x, na.rm = TRUE))</code></pre>
+<pre class="r"><code>t1 &lt;- summarize_data(df1)
+t_all &lt;- cbind(t1, t_pub) 
 
 
 colnames(t_all) &lt;- c(
@@ -548,8 +539,8 @@ colnames(t_all) &lt;- c(
 # Calculate improvement in scores betwee v1 and published version
 t_all &lt;- t_all %&gt;%  
   mutate(
-    perc_paper_dif = pub_perc_paper - v1_perc_paper,
-    perc_output_dif = pub_perc_output - v1_perc_output
+    perc_paper_dif = (pub_perc_paper - v1_perc_paper) %&gt;% round(2),
+    perc_output_dif = (pub_perc_output - v1_perc_output) %&gt;% round(2)
   )
 
 # Print the results section of the Abstract
@@ -575,7 +566,12 @@ t_cut &lt;- t_perc %&gt;%
 t_cut &lt;- t_cut %&gt;% 
   mutate(across(where(is.list), ~map_chr(., ~paste(.x, collapse = &quot;, &quot;)))) # Necessary for correct output
 
-write_csv(t_cut, &quot;results/compliance_metrics_abstract_table.csv&quot;)</code></pre>
+write_csv(t_cut, &quot;results/compliance_metrics_abstract_table.csv&quot;)
+
+df_compliance_metrics &lt;- df_compliance_metrics %&gt;%
+  mutate(across(where(is.numeric), ~ ifelse(is.nan(.x), &quot;NaN&quot;, .x)))
+
+write_csv(df_compliance_metrics, &quot;results/df_compliance_metrics.csv&quot;)</code></pre>
 <pre class="r"><code># Calculate number of days between preprints, submission, and publication
 df_preprint_dates &lt;- df_preprint_dates %&gt;%
   mutate(span_submission_preprint = as.numeric(date_journal_submission - date_preprint)) %&gt;% 
@@ -590,14 +586,16 @@ sub_pre &lt;- quantile(
   df_preprint_dates$span_submission_preprint,
   probs = c(0.25, 0.50, 0.75),
   na.rm = TRUE
-) %&gt;% as.numeric() %&gt;% round(0)
+) %&gt;% 
+  as.numeric() %&gt;% round(0)
 
 # Calculate median and IQR for days between preprint and publication
 pub_pre &lt;- quantile(
   df_preprint_dates$span_publication_preprint,
   probs = c(0.25, 0.50, 0.75),
   na.rm = TRUE
-)
+) %&gt;% 
+  as.numeric() %&gt;% round(0)
 
 write_csv(df_preprint_dates, &quot;results/df_preprint_dates.csv&quot;)</code></pre>
 <p><strong>Objectives.</strong> Sharing of research data, code,
@@ -617,23 +615,23 @@ member who integrates automated and manual assessments to provide a
 grantee with systematic feedback outlining the actions required to align
 their manuscript draft with the ASAP Open Science Policy. This abstract
 presents a cross-sectional analysis of compliance with key policy items
-for all ASAP CRN-funded articles published between Jan 1, 2024 and May
-31, 2025 (n = 103).</p>
+for all ASAP CRN-funded articles published between Jan 1, 2024 and Apr
+30, 2025 (n = 102).</p>
 <p><strong>Results.</strong> Between the version of a manuscript first
 shared with the ASAP staff and the associated final publication, there
 were substantial increases in the deposition of newly-generated datasets
-(first version: 22% to published version: 88%), unambiguous
-identification of reused datasets (72% to 86%), deposition of
-newly-generated code (15% to 68%), unambiguous identification of
-software used (34% to 78%), registration of newly-generated key lab
-materials (22% to 82%), unambiguous identification of key lab materials
+(21% for the first version to 88% for the published version),
+unambiguous identification of reused datasets (72% to 86%), deposition
+of newly-generated code (15% to 72%), unambiguous identification of
+software used (35% to 79%), registration of newly-generated key lab
+materials (22% to 78%), unambiguous identification of key lab materials
 used (44% to 87%), and deposition of newly-generated protocols and
-unambiguous identification of existing protocols (35% to 81%; protocol
-data is collapsed across new and reuse) (see Table 1).</p>
-<p>98% (101/103) percent of publications had an associated preprint.
-Preprints were posted a median of 4 days (IQR: -7 to 54) before
+unambiguous identification of existing protocols (35% to 81%; data on
+protocols is collapsed) (see Table 1).</p>
+<p>98% (100/102) percent of publications had an associated preprint.
+Preprints were posted a median of 4 days (IQR: -7 to 50) before
 submission to the journal in which they were eventually published, and
-236 days (IQR: 149 to 327) before they were published in a journal.</p>
+236 days (IQR: 150 to 328) before they were published in a journal.</p>
 <p><strong>Conclusions.</strong> A funder-led intervention to monitor
 and support a robust open science policy can foster the posting of
 preprints and the sharing of data, code, protocols, and key lab
@@ -663,57 +661,57 @@ identification of various research resources.</p>
 <tbody>
 <tr class="odd">
 <td align="left">data_new</td>
-<td align="left">96</td>
-<td align="left">601</td>
-<td align="left">681</td>
+<td align="left">95</td>
+<td align="left">657</td>
+<td align="left">744</td>
 <td align="left">88%</td>
-<td align="left">66%</td>
+<td align="left">67%</td>
 </tr>
 <tr class="even">
 <td align="left">data_reuse</td>
 <td align="left">45</td>
-<td align="left">160</td>
-<td align="left">185</td>
+<td align="left">159</td>
+<td align="left">184</td>
 <td align="left">86%</td>
 <td align="left">14%</td>
 </tr>
 <tr class="odd">
 <td align="left">code_new</td>
-<td align="left">68</td>
-<td align="left">97</td>
-<td align="left">142</td>
-<td align="left">68%</td>
-<td align="left">53%</td>
+<td align="left">67</td>
+<td align="left">109</td>
+<td align="left">152</td>
+<td align="left">72%</td>
+<td align="left">57%</td>
 </tr>
 <tr class="even">
 <td align="left">software_reuse</td>
-<td align="left">103</td>
-<td align="left">945</td>
-<td align="left">1205</td>
-<td align="left">78%</td>
+<td align="left">102</td>
+<td align="left">942</td>
+<td align="left">1189</td>
+<td align="left">79%</td>
 <td align="left">44%</td>
 </tr>
 <tr class="odd">
 <td align="left">materials_new</td>
-<td align="left">35</td>
-<td align="left">181</td>
-<td align="left">221</td>
-<td align="left">82%</td>
-<td align="left">60%</td>
+<td align="left">36</td>
+<td align="left">190</td>
+<td align="left">245</td>
+<td align="left">78%</td>
+<td align="left">56%</td>
 </tr>
 <tr class="even">
 <td align="left">materials_reuse</td>
-<td align="left">93</td>
-<td align="left">1766</td>
-<td align="left">2028</td>
+<td align="left">92</td>
+<td align="left">1820</td>
+<td align="left">2091</td>
 <td align="left">87%</td>
 <td align="left">43%</td>
 </tr>
 <tr class="odd">
 <td align="left">protocols</td>
-<td align="left">98</td>
-<td align="left">685</td>
-<td align="left">849</td>
+<td align="left">97</td>
+<td align="left">716</td>
+<td align="left">885</td>
 <td align="left">81%</td>
 <td align="left">46%</td>
 </tr>
