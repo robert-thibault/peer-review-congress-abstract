@@ -1,0 +1,15 @@
+ABSTRACT,The file compliance_metrics_abstract_table.csv contains a subset of the columns from compliance_metrics_full_table.csv. The abstract table is what will be published in the Peer Review Congress 2025 conference proceedings.
+ROW ORDER,"Rows are ordered from top to bottom as follows: data_new, data_reuse, code_new, software_reuse, materials_new, materials_reuse, protocol_perc"
+,
+v1_n,"Number of manuscripts, out of the total of n=102, that generated or used at least one of the resource type indicated in that row. Based on the first manuscript version."
+v1_shared,"Total number of the resource type indicated in that row, across all 102 manuscripts, that were shared according to the ASAP Open Science Policy. Note, most studies use more than one of each resource type (e.g., a study can use 5 protocols). Based on the first manuscript version, according to a combination of automated and manual assessments finalized by ASAP staff."
+v1_denom,"Total number of the resource type indicated in that row, across all 102 manuscripts, that were used. Note, most studies use more than one of each resource type (e.g., a study can use 5 protocols). Based on the first manuscript version, according to a combination of automated and manual assessments finalized by ASAP staff."
+v1_perc_paper,"This is a sensitivity measure. The primary outcome reported (v1_perc_output) sums all of a resource type shared and divides by the sum of all of that resource type that was used. This sensitivity measure calculates the percentage shared for each manuscript, and then takes the mean across manuscripts."
+v1_perc_output,v1_shared / v1_denom
+pub_n,"Number of manuscripts, out of the total of n=102, that generated or used at least one of the resource type indicated in that row. Based on the published manuscript version."
+pub_shared,"Total number of the resource type indicated in that row, across all 102 manuscripts, that were shared according to the ASAP Open Science Policy. Note, most studies use more than one of each resource type (e.g., a study can use 5 protocols). Based on the published manuscript version, according to a combination of automated and manual assessments finalized by ASAP staff."
+pub_denom,"Total number of the resource type indicated in that row, across all 102 manuscripts, that were used. Note, most studies use more than one of each resource type (e.g., a study can use 5 protocols). Based on the published manuscript version, according to a combination of automated and manual assessments finalized by ASAP staff."
+pub_perc_paper,"This is a sensitivity measure. The primary outcome reported (pub_perc_output) sums all of a resource type shared and divides by the sum of all of that resource type that was used. This sensitivity measure calculates the percentage shared for each manuscript, and then takes the mean across manuscripts."
+pub_perc_output,pub_shared / pub_denom
+perc_paper_dif,pub_perc_paper - v1_perc_paper
+perc_output_dif,pub_perc_output - v1_perc_output

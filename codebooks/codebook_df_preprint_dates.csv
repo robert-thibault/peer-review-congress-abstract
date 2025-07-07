@@ -1,0 +1,6 @@
+doi,The DOI for the publication.
+date_preprint,"The date the first version of the preprint was posted, according to the preprint server."
+date_journal_submission,"The date the journal that published the article received a first submission, according to the metadata provided by the publisher."
+date_publication,"The date the journal published the article, according to the metadata provided by the publisher."
+span_submission_preprint,Number of days between date_journal_submission and date_preprint. Positive values indicate that the preprint was deposited before submission to the journal.
+span_publication_preprint,Number of days between date_publication and date_preprint. Positive values indicate that the preprint was deposited before publication.

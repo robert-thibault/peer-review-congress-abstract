@@ -1,0 +1,23 @@
+study_id,Annonymized ID given to each study. We use annonymous IDs because many of the first manuscript versions shared with us were not in the public domain.
+version,Identifies whether it was the first version of the manuscript shared with us or the published version
+data_new_shared,Number of new datasets generated in the study that were shared in line with the ASAP Open Science Policy.
+data_new_denom,"Number of new datasets generated in the study, according to a combination of automated and manual assessments finalized by ASAP staff."
+data_reuse_shared,Number of pre-existing datasets used in the study that were unambiguously identified in line with the ASAP Open Science Policy.
+data_reuse_denom,"Number of pre-existing datasets used in the study, according to a combination of automated and manual assessments finalized by ASAP staff."
+code_new_shared,Number of new code scripts generated in the study that were shared in line with the ASAP Open Science Policy.
+code_new_denom,"Number of new code scripts generated in the study, according to a combination of automated and manual assessments finalized by ASAP staff."
+software_reuse_shared,Number of pre-existing software used in the study that were unambiguously identified in line with the ASAP Open Science Policy.
+software_reuse_denom,"Number of pre-existing software used in the study, according to a combination of automated and manual assessments finalized by ASAP staff."
+materials_new_shared,Number of new key lab materials generated in the study that were shared in line with the ASAP Open Science Policy.
+materials_new_denom,"Number of new key lab materials generated in the study, according to a combination of automated and manual assessments finalized by ASAP staff."
+materials_reuse_shared,Number of pre-existing  key lab materials used in the study that were unambiguously identified in line with the ASAP Open Science Policy.
+materials_reuse_denom,"Number of pre-existing key lab materials used in the study, according to a combination of automated and manual assessments finalized by ASAP staff."
+protocol_shared,Number of new and/or pre-existing protocols generated and/or used in the study that were shared in line with the ASAP Open Science Policy.
+protocol_denom,"Number of new and/or pre-existing protocols generated and/or used in the study, according to a combination of automated and manual assessments finalized by ASAP staff."
+data_new_perc,data_new_shared / data_new_denom
+data_reuse_perc,data_reuse_shared / data_reuse_denom
+code_new_perc,code_new_shared / code_new_denom
+software_reuse_perc,software_reuse_shared / software_reuse_denom
+materials_new_perc,materials_new_shared / materials_new_denom
+materials_reuse_perc,materials_reuse_shared / materials_reuse_denom
+protocol_perc,protocol_shared / protocol_denom
